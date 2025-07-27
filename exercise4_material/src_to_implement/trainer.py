@@ -50,58 +50,115 @@ class Trainer:
                             'output' : {0 : 'batch_size'}})
             
     def train_step(self, x, y):
-        # perform following steps:
         # -reset the gradients. By default, PyTorch accumulates (sums up) gradients when backward() is called. This behavior is not required here, so you need to ensure that all the gradients are zero before calling the backward.
+        self._optim.zero_grad()
         # -propagate through the network
+        output = self._model(x)
         # -calculate the loss
+        loss = self._crit(output,y)
         # -compute gradient by backward propagation
+        loss.backward()
         # -update weights
+        self._optim.step()
         # -return the loss
-        #TODO
+        return loss.item()
         
         
     
     def val_test_step(self, x, y):
-        
         # predict
+        y_p = self._model(x)
         # propagate through the network and calculate the loss and predictions
+        loss = self._crit(y_p, y.float())
         # return the loss and the predictions
-        #TODO
+        return loss.item(), y_p
+        
         
     def train_epoch(self):
         # set training mode
+        self._model.train()
+        total_loss = 0
         # iterate through the training set
-        # transfer the batch to "cuda()" -> the gpu if a gpu is given
-        # perform a training step
+        for x,y in self._train_dl:
+            # transfer the batch to "cuda()" -> the gpu if a gpu is given
+            if self._cuda:
+                x,y = x.cuda(),y.cuda()
+            # perform a training step
+            total_loss += self.train_step(x,y)
         # calculate the average loss for the epoch and return it
-        #TODO
+        return total_loss/len(self._train_dl)
+
+
     
     def val_test(self):
         # set eval mode. Some layers have different behaviors during training and testing (for example: Dropout, BatchNorm, etc.). To handle those properly, you'd want to call model.eval()
+        self._model.eval()
+        y_pre = []
+        y_true = []
+        total_loss = 0
         # disable gradient computation. Since you don't need to update the weights during testing, gradients aren't required anymore. 
-        # iterate through the validation set
-        # transfer the batch to the gpu if given
-        # perform a validation step
-        # save the predictions and the labels for each batch
+        with t.no_grad():
+             # iterate through the validation set
+            for x,y in self._val_test_dl:
+                # transfer the batch to the gpu if given
+                if self._cuda:
+                    x,y = x.cuda(),y.cuda()
+                    # perform a validation step
+                    loss,y_p = self.val_test_step(x,y)
+                    # save the predictions and the labels for each batch
+                    total_loss+=loss
+                    y_pre.append(y_p)
+                    y_true.append(y)
         # calculate the average loss and average metrics of your choice. You might want to calculate these metrics in designated functions
-        # return the loss and print the calculated metrics
-        #TODO
+        y_pre = t.cat(y_pre, dim=0)
+        y_true = t.cat(y_true, dim=0)
+        # 二值化预测（0.5为阈值）
+        y_pred_label = (y_pre > 0.5).int()
+
+        # 计算平均 loss
+        avg_loss = total_loss / len(self._val_test_dl)
+        # 多标签准确率（按实例完全匹配）
+        exact_match_acc = (y_pred_label == y_true.int()).all(dim=1).float().mean().item()
+
+        # Micro 和 Macro F1
+        f1_micro = f1_score(y_true, y_pred_label, average='micro', zero_division=0)#对常见类别友好
+        f1_macro = f1_score(y_true, y_pred_label, average='macro', zero_division=0)#更关注少量样本
+        print(f"[Validation] Loss: {avg_loss:.4f} | ExactMatch Acc: {exact_match_acc:.4f} | F1_micro: {f1_micro:.4f} | F1_macro: {f1_macro:.4f}")
+        return avg_loss
         
     
     def fit(self, epochs=-1):
         assert self._early_stopping_patience > 0 or epochs > 0
         # create a list for the train and validation losses, and create a counter for the epoch 
-        #TODO
+        train_losses = []
+        eval_losses = []
+        best_val_loss = float('inf')
+        epochs_no_improve = 0
+        epoch = 0
         
         while True:
-      
             # stop by epoch number
+            epoch += 1
+            if epochs > 0 and epoch >= epochs:
+                break
             # train for a epoch and then calculate the loss and metrics on the validation set
+            t_loss = self.train_epoch()
+            v_loss = self.val_test()
             # append the losses to the respective lists
+            train_losses.append(t_loss)
+            eval_losses.append(v_loss)
             # use the save_checkpoint function to save the model (can be restricted to epochs with improvement)
+            if v_loss < best_val_loss:
+                best_val_loss = v_loss
+                self.save_checkpoint(epoch)
+                epochs_no_improve = 0
+            else:
+                epochs_no_improve += 1
             # check whether early stopping should be performed using the early stopping criterion and stop if so
-            # return the losses for both training and validation
-        #TODO
+            if self._early_stopping_patience > 0 and epochs_no_improve >= self._early_stopping_patience:
+                break
+        # return the losses for both training and validation
+        return train_losses, eval_losses
                     
         
         
