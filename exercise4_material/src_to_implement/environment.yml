@@ -15,7 +15,3 @@ dependencies:
   - tqdm>=4.36
   - pip:
       - onnxruntime
-      - torch
-      - torchvision
-      - torchaudio
-      - --index-url https://download.pytorch.org/whl/cu126
