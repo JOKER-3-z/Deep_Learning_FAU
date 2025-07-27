@@ -1,4 +1,4 @@
-name: dl-challenge
+name: DL
 channels:
   - conda-forge
   - defaults
