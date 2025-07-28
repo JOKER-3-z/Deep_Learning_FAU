@@ -1,4 +1,5 @@
 import torch as t
+import os
 from sklearn.metrics import f1_score
 from tqdm.autonotebook import tqdm
 
@@ -17,6 +18,7 @@ class Trainer:
             self._crit = crit.cuda()
 
     def save_checkpoint(self, epoch):
+        os.makedirs("checkpoints", exist_ok=True)
         t.save({'state_dict': self._model.state_dict()}, f'checkpoints/checkpoint_{epoch:03d}.ckp')
 
     def restore_checkpoint(self, epoch_n):
