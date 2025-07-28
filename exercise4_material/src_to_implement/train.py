@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # set up a suitable loss criterion (you can find a pre-implemented loss functions in t.nn)
     crit = t.nn.BCELoss()
     # set up the optimizer (see t.optim)
-    optim = t.optim.Adam(resnet.parameters(),lr=1e-6,weight_decay=1e-7)
+    optim = t.optim.Adam(resnet.parameters(),lr=1e-5,weight_decay=1e-6)
     # create an object of type Trainer and set its early stopping criterion
     trainer = Trainer(
                 model = resnet,                       #model
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # go, go, go... call fit on trainer
     print("training……")
-    res = trainer.fit(100)
+    res = trainer.fit()
 
     # plot the results
     plt.plot(np.arange(len(res[0])), res[0], label='train loss')
