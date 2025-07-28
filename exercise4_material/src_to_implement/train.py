@@ -11,16 +11,16 @@ if __name__ == "main":
     # load the data from the csv file and perform a train-test-split
     csv_file = "./data.csv"
     df = pd.read_csv(csv_file,sep=';')
+    print("data loading……")
     # this can be accomplished using the already imported pandas and sklearn.model_selection modules
     train_df,val_df = train_test_split(df,test_size=0.2,random_state=42, stratify=df[['crack', 'inactive']])
     train_dataset = ChallengeDataset(train_df)
     val_dataset = ChallengeDataset(val_df)
     
-
     # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
     train_dl = t.utils.data.DataLoader(ChallengeDataset(train_dataset, 'train'), batch_size=512)
     val_dl = t.utils.data.DataLoader(ChallengeDataset(train_dataset, 'val'), batch_size=512)
-
+    print("model define……")
     # create an instance of our ResNet model
     resnet = model.ResNet()
 
@@ -40,7 +40,8 @@ if __name__ == "main":
             )
 
     # go, go, go... call fit on trainer
-    res = trainer.fit(50)
+    print("training……")
+    res = trainer.fit(1)
 
     # plot the results
     plt.plot(np.arange(len(res[0])), res[0], label='train loss')
