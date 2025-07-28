@@ -7,7 +7,7 @@ import model
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-if __name__ == "main":
+if __name__ == "__main__":
     # load the data from the csv file and perform a train-test-split
     csv_file = "./data.csv"
     df = pd.read_csv(csv_file,sep=';')
