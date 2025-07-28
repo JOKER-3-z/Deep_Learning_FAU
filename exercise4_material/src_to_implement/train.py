@@ -14,12 +14,10 @@ if __name__ == "__main__":
     print("data loading……")
     # this can be accomplished using the already imported pandas and sklearn.model_selection modules
     train_df,val_df = train_test_split(df,test_size=0.2,random_state=42, stratify=df[['crack', 'inactive']])
-    train_dataset = ChallengeDataset(train_df)
-    val_dataset = ChallengeDataset(val_df)
     
     # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
-    train_dl = t.utils.data.DataLoader(ChallengeDataset(train_dataset, 'train'), batch_size=512)
-    val_dl = t.utils.data.DataLoader(ChallengeDataset(train_dataset, 'val'), batch_size=512)
+    train_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'train'), batch_size=512)
+    val_dl = t.utils.data.DataLoader(ChallengeDataset(val_df, 'val'), batch_size=512)
     print("model define……")
     # create an instance of our ResNet model
     resnet = model.ResNet()
