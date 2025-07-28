@@ -18,8 +18,8 @@ class ChallengeDataset(Dataset):
         self._transform=v2.Compose([
             v2.ToImage(), 
             v2.ToDtype(torch.float32, scale=True),
-            v2.RandomRotation(90),
-            v2.RandomHorizontalFlip(p=0.5),
+            #v2.RandomRotation(90),
+            #v2.RandomHorizontalFlip(p=0.5),
             v2.Normalize(train_mean, train_std),
         ])
         self._transform_val=v2.Compose([
