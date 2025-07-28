@@ -16,8 +16,8 @@ if __name__ == "__main__":
     train_df,val_df = train_test_split(df,test_size=0.2,random_state=42, stratify=df[['crack', 'inactive']])
     print("len of train dataset: "+str(len(train_df))+" len of eval dataset: "+str(len(val_df)))
     # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
-    train_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'train'), batch_size=512)
-    val_dl = t.utils.data.DataLoader(ChallengeDataset(val_df, 'val'), batch_size=512)
+    train_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'train'), batch_size=256)
+    val_dl = t.utils.data.DataLoader(ChallengeDataset(val_df, 'val'), batch_size=256)
     print("model define……")
     # create an instance of our ResNet model
     resnet = model.ResNet()
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # set up a suitable loss criterion (you can find a pre-implemented loss functions in t.nn)
     crit = t.nn.BCELoss()
     # set up the optimizer (see t.optim)
-    optim = t.optim.Adam(resnet.parameters(),lr=1e-4,weight_decay=1e-5)
+    optim = t.optim.Adam(resnet.parameters(),lr=1e-5,weight_decay=1e-6)
     # create an object of type Trainer and set its early stopping criterion
     trainer = Trainer(
                 model = resnet,                       #model
