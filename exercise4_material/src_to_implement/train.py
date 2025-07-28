@@ -14,7 +14,7 @@ if __name__ == "__main__":
     print("data loading……")
     # this can be accomplished using the already imported pandas and sklearn.model_selection modules
     train_df,val_df = train_test_split(df,test_size=0.2,random_state=42, stratify=df[['crack', 'inactive']])
-    
+    print("len of train dataset: "+str(len(train_df))+" len of eval dataset: "+str(len(val_df)))
     # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
     train_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'train'), batch_size=512)
     val_dl = t.utils.data.DataLoader(ChallengeDataset(val_df, 'val'), batch_size=512)
