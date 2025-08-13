@@ -47,10 +47,12 @@ class ResNet(nn.Module):
         self.layer2 = ResBlock(64, 128, stride=2)
         self.layer3 = ResBlock(128, 256, stride=2)
         self.layer4 = ResBlock(256, 512, stride=2)
+        self.layer5 = ResBlock(512, 1024, stride=2)
+        self.layer6 = ResBlock(1024, 2048, stride=2)
 
         self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))  # GlobalAvgPool
         self.flatten = nn.Flatten()
-        self.fc = nn.Linear(512, 2)
+        self.fc = nn.Linear(2048, 2)
         self.sigmoid = nn.Sigmoid()  # For binary classification
 
     def forward(self, x):
@@ -61,6 +63,8 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
+        x = self.layer5(x)
+        x = self.layer6(x)
 
         x = self.global_avg_pool(x)
         x = self.flatten(x)
