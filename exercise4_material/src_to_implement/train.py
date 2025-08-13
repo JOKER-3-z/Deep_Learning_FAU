@@ -17,7 +17,7 @@ if __name__ == "__main__":
     print("len of train dataset: "+str(len(train_df))+" len of eval dataset: "+str(len(val_df)))
     # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
     train_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'train'), batch_size=256)
-    val_dl = t.utils.data.DataLoader(ChallengeDataset(val_df, 'val'), batch_size=256)
+    val_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'val'), batch_size=256)
     print("model define……")
     # create an instance of our ResNet model
     resnet = model.ResNet()
