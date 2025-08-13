@@ -6,6 +6,7 @@ import numpy as np
 import model
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from export_onnx import export
 
 if __name__ == "__main__":
     # load the data from the csv file and perform a train-test-split
@@ -16,8 +17,8 @@ if __name__ == "__main__":
     train_df,val_df = train_test_split(df,test_size=0.2,random_state=42, stratify=df[['crack', 'inactive']])
     print("len of train dataset: "+str(len(train_df))+" len of eval dataset: "+str(len(val_df)))
     # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
-    train_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'train'), batch_size=256)
-    val_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'val'), batch_size=256)
+    train_dl = t.utils.data.DataLoader(ChallengeDataset(df, 'train'), batch_size=256)
+    val_dl = t.utils.data.DataLoader(ChallengeDataset(df, 'val'), batch_size=256)
     print("model define……")
     # create an instance of our ResNet model
     resnet = model.ResNet()
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     # go, go, go... call fit on trainer
     print("training……")
     res = trainer.fit()
-
+    export(res[-1])
     # plot the results
     plt.plot(np.arange(len(res[0])), res[0], label='train loss')
     plt.plot(np.arange(len(res[1])), res[1], label='val loss')

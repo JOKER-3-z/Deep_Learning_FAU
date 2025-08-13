@@ -80,7 +80,7 @@ class Trainer:
         exact_match_acc = (y_pred_label == y_true.int()).all(dim=1).float().mean().item()
         y_true, y_pred_label = y_true.cpu().numpy(), y_pred_label.cpu().numpy()
         f1_micro = f1_score(y_true, y_pred_label, average='micro', zero_division=0)
-        print(f"[Validation] Loss: {avg_loss:.4f} | ExactMatch Acc: {exact_match_acc:.4f} | F1_micro: {f1_micro:.4f}")
+        print(f"[Validation] Loss: {avg_loss:.4f} | ExactMatch Acc: {exact_match_acc:.4f} | F1: {f1_micro:.4f}")
         return avg_loss
 
     def fit(self, epochs=-1):
@@ -109,4 +109,4 @@ class Trainer:
             if self._early_stopping_patience > 0 and epochs_no_improve >= self._early_stopping_patience:
                 print("Early stopping triggered.")
                 break
-        return train_losses, eval_losses
+        return train_losses, eval_losses,epoch
