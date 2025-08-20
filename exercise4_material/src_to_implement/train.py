@@ -7,6 +7,7 @@ import model
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from export_onnx import export
+from loss import HierarchicalBCELoss
 
 if __name__ == "__main__":
     # load the data from the csv file and perform a train-test-split
@@ -14,16 +15,17 @@ if __name__ == "__main__":
     df = pd.read_csv(csv_file,sep=';')
     print("data loading……")
     # this can be accomplished using the already imported pandas and sklearn.model_selection modules
-    train_df,val_df = train_test_split(df,test_size=0.2,random_state=42, stratify=df[['crack', 'inactive']])
+    train_df,val_df = train_test_split(df,test_size=0.1,random_state=42, stratify=df[['crack', 'inactive']])
     print("len of train dataset: "+str(len(train_df))+" len of eval dataset: "+str(len(val_df)))
     # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
-    train_dl = t.utils.data.DataLoader(ChallengeDataset(df, 'train'), batch_size=256)
-    val_dl = t.utils.data.DataLoader(ChallengeDataset(df, 'val'), batch_size=256)
+    train_dl = t.utils.data.DataLoader(ChallengeDataset(train_df, 'train'), batch_size=256)
+    val_dl = t.utils.data.DataLoader(ChallengeDataset(val_df, 'val'), batch_size=256)
     print("model define……")
     # create an instance of our ResNet model
     resnet = model.ResNet()
 
     # set up a suitable loss criterion (you can find a pre-implemented loss functions in t.nn)
+    #crit = HierarchicalBCELoss(2.0,1.0,3.0)
     crit = t.nn.BCELoss()
     # set up the optimizer (see t.optim)
     optim = t.optim.Adam(resnet.parameters(),lr=1e-5,weight_decay=1e-6)
@@ -35,12 +37,12 @@ if __name__ == "__main__":
                 train_dl = train_dl,                # Training data set
                 val_test_dl = val_dl,             # Validation (or test) data set
                 cuda=True,                    # Whether to use the GPU
-                early_stopping_patience=5
+                early_stopping_patience=10
             )
 
     # go, go, go... call fit on trainer
     print("training……")
-    res = trainer.fit()
+    res = trainer.fit(100)
     export(res[-1])
     # plot the results
     plt.plot(np.arange(len(res[0])), res[0], label='train loss')

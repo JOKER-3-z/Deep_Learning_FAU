@@ -116,7 +116,7 @@ class TestModel(unittest.TestCase):
 if __name__ == '__main__':
 
     import sys
-    if sys.argv[-1] == "Bonus":
+    if True:
         loader = unittest.TestLoader()
         bonus_points = {}
         tests = [TestDataset, TestModel]

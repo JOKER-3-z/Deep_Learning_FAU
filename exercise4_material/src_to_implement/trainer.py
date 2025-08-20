@@ -37,14 +37,23 @@ class Trainer:
                       input_names=['input'],
                       output_names=['output'],
                       dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}})
-
+    
+    def acc_f1_calculation(self,y_pre,y_true):
+        y_pred_label = (y_pre > 0.5).int()
+        acc_per_class = (y_pred_label == y_true.int()).float().mean(dim=0)  # shape: (2,)
+        Acc_crack, Acc_inactive = acc_per_class.tolist()
+        y_true, y_pred_label = y_true.cpu().numpy(), y_pred_label.cpu().numpy()
+        f1_crack,f1_inactive = f1_score(y_true, y_pred_label, average=None, zero_division=0)
+        f1_micro = (f1_crack+f1_inactive)/2
+        return [Acc_crack, Acc_inactive],[f1_crack,f1_inactive,f1_micro]
+    
     def train_step(self, x, y):
         self._optim.zero_grad()
         output = self._model(x)
         loss = self._crit(output, y)
         loss.backward()
         self._optim.step()
-        return loss.item()
+        return loss.item(),output
 
     def val_test_step(self, x, y):
         y_p = self._model(x)
@@ -54,11 +63,21 @@ class Trainer:
     def train_epoch(self):
         self._model.train()
         total_loss = 0
+        y_pre = []
+        y_true = []
         for x, y in tqdm(self._train_dl, desc="Training", leave=False, dynamic_ncols=True):
             if self._cuda:
                 x, y = x.cuda(), y.cuda()
-            total_loss += self.train_step(x, y)
-        return total_loss / len(self._train_dl)
+            loss,y_p = self.train_step(x, y)
+            y_pre.append(y_p.detach())
+            y_true.append(y.detach())
+            total_loss+=loss
+        y_pre = t.cat(y_pre, dim=0)
+        y_true = t.cat(y_true, dim=0)
+        avg_loss = total_loss / len(self._val_test_dl)
+        acc,f1 = self.acc_f1_calculation(y_pre,y_true)
+        print(f"[Training] Loss: {avg_loss:.4f} |Acc_crack: {acc[0]:.4f} | Acc_inactive: {acc[1]:.4f}| F1_crack: {f1[0]:.4f} | f1_inactive: {f1[1]:.4f} | F1_mean: {f1[2]:.4f}")
+        return avg_loss
 
     def val_test(self):
         self._model.eval()
@@ -75,21 +94,19 @@ class Trainer:
                 y_true.append(y)
         y_pre = t.cat(y_pre, dim=0)
         y_true = t.cat(y_true, dim=0)
-        y_pred_label = (y_pre > 0.5).int()
         avg_loss = total_loss / len(self._val_test_dl)
-        exact_match_acc = (y_pred_label == y_true.int()).all(dim=1).float().mean().item()
-        y_true, y_pred_label = y_true.cpu().numpy(), y_pred_label.cpu().numpy()
-        f1_micro = f1_score(y_true, y_pred_label, average='micro', zero_division=0)
-        print(f"[Validation] Loss: {avg_loss:.4f} | ExactMatch Acc: {exact_match_acc:.4f} | F1: {f1_micro:.4f}")
-        return avg_loss
+        acc,f1 = self.acc_f1_calculation(y_pre,y_true)
+        print(f"[Validation] Loss: {avg_loss:.4f} |Acc_crack: {acc[0]:.4f} | Acc_inactive: {acc[1]:.4f}| F1_crack: {f1[0]:.4f} | f1_inactive: {f1[1]:.4f} | F1_mean: {f1[2]:.4f}")
+        return avg_loss,f1[2]
 
     def fit(self, epochs=-1):
         assert self._early_stopping_patience > 0 or epochs > 0
         train_losses = []
         eval_losses = []
-        best_val_loss = float('inf')
+        best_val_f1 = float(0)
         epochs_no_improve = 0
         epoch = 0
+        best_epoch=0
 
         while True:
             epoch += 1
@@ -97,16 +114,17 @@ class Trainer:
             if epochs > 0 and epoch >= epochs:
                 break
             t_loss = self.train_epoch()
-            v_loss = self.val_test()
+            v_loss,f1 = self.val_test()
             train_losses.append(t_loss)
             eval_losses.append(v_loss)
-            if v_loss < best_val_loss:
-                best_val_loss = v_loss
+            if f1 > best_val_f1:
+                best_val_f1 = f1
                 self.save_checkpoint(epoch)
                 epochs_no_improve = 0
+                best_epoch=epoch
             else:
                 epochs_no_improve += 1
             if self._early_stopping_patience > 0 and epochs_no_improve >= self._early_stopping_patience:
                 print("Early stopping triggered.")
                 break
-        return train_losses, eval_losses,epoch
+        return train_losses, eval_losses,best_epoch

@@ -11,3 +11,4 @@ def export(epoch):
     trainer = Trainer(model, crit)
     trainer.restore_checkpoint(epoch)
     trainer.save_onnx('checkpoint_{:03d}.onnx'.format(epoch))
+
